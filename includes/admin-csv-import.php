@@ -109,7 +109,7 @@ function mat_csv_preview_handler() {
 
     // 在籍社員を一括取得してマップ化（照合用）
     $employees_raw = $wpdb->get_results(
-        "SELECT id, employee_code, name FROM {$wpdb->prefix}emp_master WHERE is_active = 1"
+        "SELECT id, employee_code, name FROM {$wpdb->prefix}emp_master"
     );
     $emp_map = array();
     foreach ( $employees_raw as $e ) {
@@ -257,7 +257,7 @@ function mat_csv_import_chunk_handler() {
 
     // 在籍社員マップ
     $employees_raw = $wpdb->get_results(
-        "SELECT id, employee_code, name FROM {$wpdb->prefix}emp_master WHERE is_active = 1"
+        "SELECT id, employee_code, name FROM {$wpdb->prefix}emp_master"
     );
     $emp_map = array();
     foreach ( $employees_raw as $e ) {
