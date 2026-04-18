@@ -3,11 +3,11 @@ jQuery(document).ready(function ($) {
     // =========================================================
     //  設定
     // =========================================================
-    var CHUNK_SIZE  = 100;   // 1回のAJAXで送る最大行数
-    var ajaxurl     = matCsvImport.ajaxurl;
-    var nonce       = matCsvImport.nonce;
+    var CHUNK_SIZE = 100;   // 1回のAJAXで送る最大行数
+    var ajaxurl = matCsvImport.ajaxurl;
+    var nonce = matCsvImport.nonce;
 
-    var parsedRows  = [];    // CSVをパースした全行データ
+    var parsedRows = [];    // CSVをパースした全行データ
     var previewData = [];    // サーバーからのバリデーション結果
 
     // =========================================================
@@ -53,8 +53,8 @@ jQuery(document).ready(function ($) {
             // サーバーにバリデーション依頼
             $.post(ajaxurl, {
                 action: 'mat_csv_preview',
-                nonce:  nonce,
-                rows:   JSON.stringify(parsedRows),
+                nonce: nonce,
+                rows: JSON.stringify(parsedRows),
             }, function (res) {
                 $btn.prop('disabled', false).text('🔍 プレビュー・バリデーション');
 
@@ -104,7 +104,7 @@ jQuery(document).ready(function ($) {
         // 改行コード統一
         text = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
 
-        var lines   = [];
+        var lines = [];
         var current = '';
         var inQuote = false;
 
@@ -134,12 +134,12 @@ jQuery(document).ready(function ($) {
         // 見出し行（日本語）→ DBカラム名 マッピング
         var colMap = {
             '社員コード': 'employee_code',
-            '勤務日':     'work_date',
-            '出勤時刻':   'clock_in',
-            '退勤時刻':   'clock_out',
-            '休憩時間':   'break_time',
+            '勤務日': 'work_date',
+            '出勤時刻': 'clock_in',
+            '退勤時刻': 'clock_out',
+            '休憩時間': 'break_time',
             '有給希望日': 'paid_leave_date',
-            '備考':       'note',
+            '備考': 'note',
         };
 
         var headers = splitCsvLine(lines[0]).map(function (h) {
@@ -154,13 +154,38 @@ jQuery(document).ready(function ($) {
             headers.forEach(function (key, idx) {
                 obj[key] = (cells[idx] || '').trim();
             });
+            normalizeRow(obj);
             rows.push(obj);
         }
         return rows;
     }
 
+    /**
+     * 日付・時刻フィールドを正規化する
+     *  - 日付: 2026/3/2 → 2026-03-02（スラッシュ区切り・ゼロ埋め対応）
+     *  - 時刻: 8:00:00 → 08:00（秒カット・ゼロ埋め対応）
+     */
+    function normalizeRow(obj) {
+        ['work_date', 'paid_leave_date'].forEach(function (key) {
+            var v = obj[key] || '';
+            if (v && v.indexOf('/') !== -1) {
+                var parts = v.split('/');
+                obj[key] = parts[0]
+                    + '-' + ('0' + parts[1]).slice(-2)
+                    + '-' + ('0' + parts[2]).slice(-2);
+            }
+        });
+        ['clock_in', 'clock_out', 'break_time'].forEach(function (key) {
+            var v = obj[key] || '';
+            if (v && v.split(':').length === 3) {
+                var t = v.split(':');
+                obj[key] = ('0' + t[0]).slice(-2) + ':' + ('0' + t[1]).slice(-2);
+            }
+        });
+    }
+
     function splitCsvLine(line) {
-        var cells   = [];
+        var cells = [];
         var current = '';
         var inQuote = false;
         for (var i = 0; i < line.length; i++) {
@@ -187,10 +212,10 @@ jQuery(document).ready(function ($) {
     //  プレビューテーブル描画
     // =========================================================
     var STATUS_LABEL = {
-        'ok':        '<span class="mat-badge mat-badge-ok">正常</span>',
-        'warn':      '<span class="mat-badge mat-badge-warn">警告</span>',
+        'ok': '<span class="mat-badge mat-badge-ok">正常</span>',
+        'warn': '<span class="mat-badge mat-badge-warn">警告</span>',
         'duplicate': '<span class="mat-badge mat-badge-dup">重複</span>',
-        'error':     '<span class="mat-badge mat-badge-error">エラー</span>',
+        'error': '<span class="mat-badge mat-badge-error">エラー</span>',
     };
 
     function renderPreview(data) {
@@ -198,10 +223,10 @@ jQuery(document).ready(function ($) {
 
         // サマリー
         var summaryHtml = '全 <strong>' + s.total + '</strong> 件'
-            + ' ／ 正常：<strong class="c-ok">'   + s.ok        + '</strong>'
-            + ' ／ 警告：<strong class="c-warn">'  + s.warn      + '</strong>'
-            + ' ／ 重複：<strong class="c-dup">'   + s.duplicate + '</strong>'
-            + ' ／ エラー：<strong class="c-err">' + s.error     + '</strong>';
+            + ' ／ 正常：<strong class="c-ok">' + s.ok + '</strong>'
+            + ' ／ 警告：<strong class="c-warn">' + s.warn + '</strong>'
+            + ' ／ 重複：<strong class="c-dup">' + s.duplicate + '</strong>'
+            + ' ／ エラー：<strong class="c-err">' + s.error + '</strong>';
         $('#mat-preview-summary').html(summaryHtml);
 
         // テーブル
@@ -246,9 +271,9 @@ jQuery(document).ready(function ($) {
         $('#mat-progress-area').show();
         $('#mat-result-area').hide();
 
-        var allRows     = previewData;
-        var total       = allRows.length;
-        var chunks      = [];
+        var allRows = previewData;
+        var total = allRows.length;
+        var chunks = [];
 
         // チャンク分割
         for (var i = 0; i < total; i += CHUNK_SIZE) {
@@ -256,7 +281,7 @@ jQuery(document).ready(function ($) {
         }
 
         var totalResult = { inserted: 0, updated: 0, skipped: 0, errors: [] };
-        var processed   = 0;
+        var processed = 0;
 
         // チャンクを順番に送信
         function sendChunk(idx) {
@@ -266,21 +291,21 @@ jQuery(document).ready(function ($) {
                 return;
             }
 
-            var chunk       = chunks[idx];
-            var percent     = Math.round(((idx) / chunks.length) * 100);
+            var chunk = chunks[idx];
+            var percent = Math.round(((idx) / chunks.length) * 100);
             updateProgress(percent, (idx * CHUNK_SIZE) + ' / ' + total + ' 件処理中...');
 
             $.post(ajaxurl, {
-                action:       'mat_csv_import_chunk',
-                nonce:        nonce,
-                rows:         JSON.stringify(chunk),
+                action: 'mat_csv_import_chunk',
+                nonce: nonce,
+                rows: JSON.stringify(chunk),
                 on_duplicate: onDuplicate,
             }, function (res) {
                 if (res.success) {
                     totalResult.inserted += res.data.inserted;
-                    totalResult.updated  += res.data.updated;
-                    totalResult.skipped  += res.data.skipped;
-                    totalResult.errors    = totalResult.errors.concat(res.data.errors);
+                    totalResult.updated += res.data.updated;
+                    totalResult.skipped += res.data.skipped;
+                    totalResult.errors = totalResult.errors.concat(res.data.errors);
                 } else {
                     totalResult.errors.push('チャンク' + (idx + 1) + 'でエラー：' + res.data);
                 }
@@ -318,8 +343,8 @@ jQuery(document).ready(function ($) {
             + '<p>🎉 インポートが完了しました。</p>'
             + '<table class="mat-result-table">'
             + '<tr><th>新規追加</th><td><strong>' + result.inserted + '</strong> 件</td></tr>'
-            + '<tr><th>上書き更新</th><td><strong>' + result.updated  + '</strong> 件</td></tr>'
-            + '<tr><th>スキップ</th><td><strong>' + result.skipped  + '</strong> 件</td></tr>'
+            + '<tr><th>上書き更新</th><td><strong>' + result.updated + '</strong> 件</td></tr>'
+            + '<tr><th>スキップ</th><td><strong>' + result.skipped + '</strong> 件</td></tr>'
             + '</table>'
             + '</div>';
 
@@ -340,7 +365,7 @@ jQuery(document).ready(function ($) {
         // リセット
         $('#mat-restart-btn').on('click', function () {
             $('#mat-csv-file').val('');
-            parsedRows  = [];
+            parsedRows = [];
             previewData = [];
             $('#mat-preview-area, #mat-result-area').hide();
             $('#mat-csv-preview-btn').prop('disabled', true);
