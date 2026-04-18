@@ -177,10 +177,10 @@ jQuery(document).ready(function ($) {
         });
         ['clock_in', 'clock_out', 'break_time'].forEach(function (key) {
             var v = obj[key] || '';
-            if (v && v.split(':').length === 3) {
-                var t = v.split(':');
-                obj[key] = ('0' + t[0]).slice(-2) + ':' + ('0' + t[1]).slice(-2);
-            }
+            if (!v) return;
+            var t = v.split(':');
+            // 秒あり(8:00:00) / 秒なし1桁(8:00) どちらもゼロ埋めして HH:MM に統一
+            obj[key] = ('0' + t[0]).slice(-2) + ':' + ('0' + (t[1] || '00')).slice(-2);
         });
     }
 
