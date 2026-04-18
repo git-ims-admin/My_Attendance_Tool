@@ -1,0 +1,683 @@
+/* =============================================================
+   My Attendance Tool v3.0 - Frontend Styles
+   employee-manager のカラーパレットに統一
+   ============================================================= */
+
+/* ---- 変数 ---- */
+:root {
+    --mat-primary: #0073aa;
+    --mat-primary-dark: #005177;
+    --mat-success: #28a745;
+    --mat-success-dark: #1e7e34;
+    --mat-danger: #d63638;
+    --mat-danger-dark: #b02a2c;
+    --mat-warning: #ffc107;
+    --mat-warning-dark: #c69500;
+    --mat-secondary: #6c757d;
+    --mat-bg: #f8f9fa;
+    --mat-bg-blue: #f0f7ff;
+    --mat-bg-yellow: #fffbeb;
+    --mat-border: #dee2e6;
+    --mat-text: #1a1a2e;
+    --mat-muted: #6c757d;
+    --mat-radius: 8px;
+    --mat-shadow: 0 2px 8px rgba(0, 0, 0, .10);
+}
+
+/* ---- コンテナ ---- */
+.mat-wrap {
+    max-width: 480px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 20px 16px;
+    box-sizing: border-box;
+    font-family: 'Meiryo UI', 'メイリオ', 'Hiragino Sans', sans-serif;
+    color: var(--mat-text);
+}
+
+/* ---- 時計 ---- */
+.mat-clock {
+    font-size: 2.8em;
+    font-weight: bold;
+    text-align: center;
+    color: var(--mat-primary);
+    font-family: 'Courier New', monospace;
+    margin-bottom: 24px;
+    letter-spacing: 2px;
+}
+
+/* ---- セクション共通 ---- */
+.mat-section {
+    background: #fff;
+    border: 1px solid var(--mat-border);
+    border-radius: var(--mat-radius);
+    padding: 24px 20px;
+    box-shadow: var(--mat-shadow);
+    box-sizing: border-box;
+}
+
+.mat-section-title {
+    font-size: 1.05em;
+    font-weight: bold;
+    color: var(--mat-primary);
+    margin: 0 0 16px;
+    text-align: center;
+}
+
+.mat-hint {
+    font-size: 0.87em;
+    color: var(--mat-muted);
+    text-align: center;
+    margin: 0 0 14px;
+    line-height: 1.6;
+}
+
+.mat-greeting {
+    font-size: 0.95em;
+    font-weight: bold;
+    color: var(--mat-text);
+    text-align: center;
+    margin: 0 0 14px;
+}
+
+/* ---- フォーム要素 ---- */
+.mat-input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 2px solid var(--mat-border);
+    border-radius: var(--mat-radius);
+    font-size: 1em;
+    box-sizing: border-box;
+    transition: border-color .2s;
+    font-family: inherit;
+}
+
+.mat-input:focus {
+    outline: none;
+    border-color: var(--mat-primary);
+}
+
+.mat-input-center {
+    text-align: center;
+    font-size: 1.15em;
+    letter-spacing: 1px;
+    margin-bottom: 12px;
+}
+
+.mat-input-date {
+    width: 100%;
+    /* flex:1 から変更 */
+    box-sizing: border-box;
+}
+
+.mat-textarea {
+    width: 100%;
+    padding: 8px 12px;
+    border: 2px solid var(--mat-border);
+    border-radius: var(--mat-radius);
+    font-size: 0.92em;
+    font-family: inherit;
+    resize: vertical;
+    box-sizing: border-box;
+    transition: border-color .2s;
+}
+
+.mat-textarea:focus {
+    outline: none;
+    border-color: var(--mat-primary);
+}
+
+/* ---- ボタン ---- */
+.mat-btn {
+    display: inline-block;
+    padding: 10px 18px;
+    border: none;
+    border-radius: var(--mat-radius);
+    font-size: 0.97em;
+    font-weight: bold;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background .15s, opacity .15s;
+    text-align: center;
+    box-sizing: border-box;
+}
+
+.mat-btn:disabled {
+    opacity: .6;
+    cursor: not-allowed;
+}
+
+.mat-btn-full {
+    width: 100%;
+    margin-top: 10px;
+}
+
+.mat-btn-primary {
+    background: var(--mat-primary);
+    color: #fff;
+}
+
+.mat-btn-primary:hover:not(:disabled) {
+    background: var(--mat-primary-dark);
+}
+
+.mat-btn-secondary {
+    background: var(--mat-bg);
+    color: var(--mat-text);
+    border: 1px solid var(--mat-border);
+}
+
+.mat-btn-secondary:hover:not(:disabled) {
+    background: var(--mat-border);
+}
+
+.mat-btn-checkin {
+    background: var(--mat-success);
+    color: #fff;
+    font-size: 1.1em;
+    padding: 14px;
+}
+
+.mat-btn-checkin:hover:not(:disabled) {
+    background: var(--mat-success-dark);
+}
+
+.mat-btn-checkout {
+    background: var(--mat-danger);
+    color: #fff;
+    font-size: 1.1em;
+    padding: 14px;
+}
+
+.mat-btn-checkout:hover:not(:disabled) {
+    background: var(--mat-danger-dark);
+}
+
+.mat-btn-break {
+    background: var(--mat-warning);
+    color: #333;
+}
+
+.mat-btn-break:hover:not(:disabled) {
+    background: var(--mat-warning-dark);
+}
+
+.mat-btn-danger {
+    background: var(--mat-danger);
+    color: #fff;
+    padding: 10px 16px;
+    width: 100%;
+}
+
+.mat-btn-danger:hover:not(:disabled) {
+    background: var(--mat-danger-dark);
+}
+
+.mat-btn-sm {
+    padding: 4px 10px;
+    font-size: 0.8em;
+    border-radius: 5px;
+    background: var(--mat-primary);
+    color: #fff;
+    border: none;
+    cursor: pointer;
+}
+
+.mat-btn-sm:hover:not(:disabled) {
+    background: var(--mat-primary-dark);
+}
+
+/* ---- メッセージ ---- */
+.mat-error {
+    color: var(--mat-danger);
+    font-size: 0.88em;
+    text-align: center;
+    margin: 8px 0 0;
+    min-height: 1.2em;
+}
+
+.mat-success {
+    color: var(--mat-success);
+    font-size: 0.88em;
+    text-align: center;
+    margin: 8px 0 0;
+}
+
+.mat-back-link {
+    text-align: center;
+    margin: 10px 0 0;
+    font-size: 0.87em;
+}
+
+.mat-back-link a {
+    color: var(--mat-muted);
+    text-decoration: none;
+}
+
+.mat-back-link a:hover {
+    color: var(--mat-primary);
+    text-decoration: underline;
+}
+
+/* ---- ユーザーバッジ ---- */
+.mat-user-badge {
+    background: var(--mat-bg-blue);
+    border: 1px solid #cfe2ff;
+    border-radius: var(--mat-radius);
+    padding: 10px 14px;
+    text-align: center;
+    font-weight: bold;
+    font-size: 1.05em;
+    color: #084298;
+    margin-bottom: 16px;
+}
+
+/* ---- 打刻ボタンペア ---- */
+.mat-punch-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 16px;
+}
+
+/* ---- 休憩ボックス ---- */
+.mat-break-box {
+    background: var(--mat-bg-blue);
+    border: 1px solid #cfe2ff;
+    border-radius: var(--mat-radius);
+    padding: 14px;
+    margin-bottom: 14px;
+}
+
+.mat-break-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: bold;
+    color: #084298;
+    margin-bottom: 10px;
+}
+
+.mat-break-value {
+    font-size: 1.2em;
+    color: var(--mat-primary);
+}
+
+.mat-range {
+    width: 100%;
+    height: 8px;
+    cursor: pointer;
+    margin-bottom: 12px;
+    accent-color: var(--mat-primary);
+}
+
+/* ---- 有給ボックス ---- */
+.mat-paid-leave-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.mat-paid-leave-box {
+    background: var(--mat-bg-yellow);
+    border: 1px solid #fde68a;
+    border-radius: var(--mat-radius);
+    padding: 14px;
+    margin-bottom: 14px;
+}
+
+.mat-paid-leave-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+/* ---- 備考ボックス ---- */
+.mat-note-box {
+    margin-bottom: 16px;
+}
+
+/* ---- ラベル ---- */
+.mat-label {
+    display: block;
+    font-weight: bold;
+    font-size: 0.9em;
+    color: var(--mat-muted);
+    margin-bottom: 6px;
+}
+
+/* ---- 履歴ヘッダー ---- */
+.mat-history-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-left: 4px solid var(--mat-primary);
+    padding-left: 10px;
+    margin-bottom: 8px;
+    font-size: 0.93em;
+    font-weight: bold;
+}
+
+.mat-history-header strong {
+    color: var(--mat-primary);
+    font-size: 1.2em;
+}
+
+.mat-month-picker {
+    padding: 4px 8px;
+    border: 1px solid var(--mat-border);
+    border-radius: 5px;
+    font-size: 0.82em;
+    font-family: inherit;
+}
+
+/* ---- 履歴テーブル ---- */
+.mat-history-scroll {
+    max-height: 230px;
+    overflow-y: auto;
+    overflow-x: auto;
+    border: 1px solid var(--mat-border);
+    border-radius: var(--mat-radius);
+    margin-bottom: 14px;
+    -webkit-overflow-scrolling: touch;
+}
+
+.mat-history-table {
+    width: 100%;
+    min-width: 360px;
+    border-collapse: collapse;
+    font-size: 0.76em;
+    table-layout: auto;
+}
+
+.mat-history-table thead th {
+    position: sticky;
+    top: 0;
+    background: var(--mat-bg);
+    border-bottom: 2px solid var(--mat-border);
+    padding: 7px 5px;
+    text-align: center;
+    font-size: 0.85em;
+    white-space: nowrap;
+    color: var(--mat-muted);
+}
+
+.mat-history-table tbody td {
+    padding: 6px 4px;
+    border-bottom: 1px solid #f0f0f0;
+    text-align: center;
+    vertical-align: middle;
+    white-space: nowrap;
+}
+
+.mat-history-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.mat-history-table tbody tr:hover td {
+    background: var(--mat-bg);
+}
+
+.mat-col-paid {
+    color: var(--mat-danger);
+}
+
+/* ---- 承認状態バッジ ---- */
+.mat-status-badge {
+    display: inline-block;
+    padding: 2px 7px;
+    border-radius: 10px;
+    font-size: 0.85em;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.mat-status-pending {
+    background: #fef3c7;
+    color: var(--mat-warning-dark);
+}
+
+.mat-status-approved {
+    background: #dcfce7;
+    color: var(--mat-success-dark);
+}
+
+.mat-status-rejected {
+    background: #fee2e2;
+    color: var(--mat-danger-dark);
+}
+
+.mat-status-noflow {
+    background: #e0e7ff;
+    color: #4f46e5;
+}
+
+.mat-loading {
+    text-align: center;
+    padding: 20px;
+    color: var(--mat-muted);
+    font-style: italic;
+}
+
+/* ---- 出勤日数 ---- */
+.mat-work-summary {
+    display: flex;
+    gap: 16px;
+    justify-content: flex-end;
+    margin-bottom: 6px;
+    font-size: 0.85em;
+    color: var(--mat-muted);
+}
+
+.mat-work-summary strong {
+    color: var(--mat-text);
+}
+
+/* ---- ログアウト ---- */
+.mat-logout-row {
+    text-align: center;
+    margin-top: 8px;
+}
+
+.mat-logout-row a {
+    color: var(--mat-muted);
+    font-size: 0.87em;
+    text-decoration: none;
+}
+
+.mat-logout-row a:hover {
+    color: var(--mat-danger);
+}
+
+/* ---- モーダル ---- */
+.mat-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, .45);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    box-sizing: border-box;
+}
+
+.mat-modal-inner {
+    background: #fff;
+    border-radius: 10px;
+    padding: 28px 24px;
+    width: 360px;
+    max-width: 92vw;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, .2);
+    box-sizing: border-box;
+}
+
+.mat-modal-title {
+    font-size: 1em;
+    font-weight: bold;
+    margin: 0 0 18px;
+    color: var(--mat-primary);
+}
+
+.mat-modal-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.mat-modal-row label {
+    min-width: 50px;
+    font-size: 0.88em;
+    color: var(--mat-muted);
+    font-weight: bold;
+}
+
+.mat-modal-row .mat-input {
+    flex: 1;
+    padding: 7px 10px;
+}
+
+.mat-modal-row .mat-textarea {
+    flex: 1;
+}
+
+.mat-modal-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-top: 18px;
+}
+
+/* ---- iOS WebKit: input[type=date] 崩れ対策 ---- */
+input[type="date"].mat-input {
+    -webkit-appearance: none;
+    appearance: none;
+    display: block;
+    width: 100%;
+    min-height: 44px;
+    /* タップターゲット確保 */
+    box-sizing: border-box;
+    color: var(--mat-text);
+}
+
+/* タッチデバイス（スマホ・タブレット）のみ */
+@media (hover: none) and (pointer: coarse) {
+    input[type="date"].mat-input:not([data-has-value])::before {
+        content: "日付を選択";
+        color: var(--mat-muted);
+        pointer-events: none;
+    }
+}
+
+/* =============================================================
+   レスポンシブ対応
+   ─────────────────────────────────────────
+   ① ≤ 640px  : タブレット・大型スマホ横向き
+                max-width を解除してフル幅に近づける
+   ② ≤ 480px  : 一般的なスマホ縦向き
+                padding・フォントを一段階縮小
+   ③ ≤ 360px  : 小型スマホ（iPhone SE 等）
+                さらに compact に
+   ============================================================= */
+
+/* ① タブレット〜大型スマホ横向き (481px ～ 640px) */
+@media (max-width: 640px) {
+    .mat-wrap {
+        max-width: 100%;
+        /* フル幅に解放して横マージンを除去 */
+        padding: 16px 14px;
+    }
+
+    .mat-section {
+        padding: 20px 16px;
+    }
+
+    .mat-clock {
+        font-size: 2.4em;
+        margin-bottom: 20px;
+    }
+
+    .has-global-padding:has(.mat-wrap),
+    .entry-content:has(.mat-wrap) {
+        padding-right: 1.4rem !important;
+        padding-left: 1.4rem !important;
+    }
+
+}
+
+/* ② スマホ縦向き (～ 480px) */
+@media (max-width: 480px) {
+    .mat-wrap {
+        padding: 12px 10px;
+    }
+
+    .mat-section {
+        padding: 18px 14px;
+    }
+
+    .mat-clock {
+        font-size: 2.2em;
+        margin-bottom: 16px;
+        letter-spacing: 1px;
+    }
+
+    .mat-punch-buttons {
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+    }
+
+    .mat-btn-checkin,
+    .mat-btn-checkout {
+        padding: 12px;
+        font-size: 1em;
+    }
+
+    .mat-history-scroll {
+        max-height: 200px;
+    }
+
+    .mat-modal-inner {
+        padding: 20px 16px;
+    }
+
+
+}
+
+/* ③ 小型スマホ (～ 360px) */
+@media (max-width: 360px) {
+    .mat-wrap {
+        padding: 10px 8px;
+    }
+
+    .mat-section {
+        padding: 14px 12px;
+        border-radius: 6px;
+    }
+
+    .mat-clock {
+        font-size: 1.9em;
+        letter-spacing: 0;
+    }
+
+    .mat-user-badge {
+        padding: 8px 10px;
+        font-size: 0.97em;
+    }
+
+    .mat-break-box,
+    .mat-paid-leave-box {
+        padding: 10px;
+    }
+
+    .mat-history-table {
+        font-size: 0.72em;
+        min-width: 300px;
+    }
+
+    .mat-history-table thead th,
+    .mat-history-table tbody td {
+        padding: 5px 3px;
+    }
+}
