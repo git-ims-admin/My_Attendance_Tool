@@ -25,6 +25,7 @@ require_once MAT_PATH . 'includes/admin-settings.php';
 require_once MAT_PATH . 'includes/admin-auth-management.php';
 require_once MAT_PATH . 'includes/admin-settings-page.php';
 require_once MAT_PATH . 'includes/admin-test-data.php';
+require_once MAT_PATH . 'includes/admin-csv-import.php'; 
 require_once MAT_PATH . 'includes/frontend-shortcode.php';
 
 // ===== 有効化フック =====

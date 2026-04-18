@@ -1,0 +1,235 @@
+/* =========================================================
+   MAT CSV一括インポート スタイル
+   ========================================================= */
+
+.mat-csv-wrap h1 {
+    margin-bottom: 20px;
+}
+
+/* カード */
+.mat-csv-card {
+    background: #fff;
+    border: 1px solid #dcdcdc;
+    border-radius: 6px;
+    padding: 20px 24px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,.06);
+}
+
+.mat-csv-card h2 {
+    font-size: 15px;
+    font-weight: 700;
+    margin: 0 0 14px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #2271b1;
+    color: #1d2327;
+}
+
+/* ダウンロードボタン */
+.mat-download-btn {
+    margin-bottom: 14px !important;
+    font-size: 14px !important;
+    padding: 6px 16px !important;
+}
+
+/* カラム説明テーブル */
+.mat-col-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    margin-top: 10px;
+}
+.mat-col-table th {
+    background: #f6f7f7;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    text-align: left;
+    font-weight: 600;
+}
+.mat-col-table td {
+    padding: 7px 12px;
+    border: 1px solid #ddd;
+}
+
+.mat-csv-note {
+    margin-top: 10px;
+    color: #c67c00;
+    font-size: 13px;
+}
+
+/* ファイル選択エリア */
+.mat-csv-row {
+    display: flex;
+    gap: 30px;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+}
+.mat-csv-label {
+    display: block;
+    font-weight: 600;
+    font-size: 13px;
+    margin-bottom: 6px;
+    color: #1d2327;
+}
+.mat-file-input {
+    font-size: 13px;
+}
+.mat-radio-label {
+    display: block;
+    font-size: 13px;
+    margin-bottom: 4px;
+    cursor: pointer;
+}
+.mat-csv-error {
+    color: #d63638;
+    font-size: 13px;
+    margin-top: 8px;
+}
+
+/* サマリーバー */
+.mat-summary-bar {
+    background: #f0f6fc;
+    border: 1px solid #c3d9f0;
+    border-radius: 4px;
+    padding: 10px 16px;
+    font-size: 13px;
+    margin-bottom: 14px;
+}
+.mat-summary-bar .c-ok   { color: #00a32a; }
+.mat-summary-bar .c-warn { color: #c67c00; }
+.mat-summary-bar .c-dup  { color: #2271b1; }
+.mat-summary-bar .c-err  { color: #d63638; }
+
+/* プレビューテーブルラッパー */
+.mat-table-wrap {
+    overflow-x: auto;
+    max-height: 480px;
+    overflow-y: auto;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    margin-bottom: 16px;
+}
+
+/* プレビューテーブル */
+.mat-preview-table {
+    margin: 0 !important;
+    font-size: 12px;
+    white-space: nowrap;
+    border-collapse: collapse;
+    width: 100%;
+}
+.mat-preview-table thead th {
+    position: sticky;
+    top: 0;
+    background: #f6f7f7;
+    z-index: 5;
+    padding: 8px 10px;
+    border-bottom: 2px solid #ccc;
+    font-size: 12px;
+}
+.mat-preview-table td {
+    padding: 6px 10px;
+    border-bottom: 1px solid #efefef;
+    vertical-align: top;
+}
+.mat-preview-table .mat-msg {
+    white-space: normal;
+    min-width: 160px;
+    font-size: 11px;
+    color: #555;
+}
+
+/* 行の色 */
+.mat-row-ok        { background: #fff; }
+.mat-row-warn      { background: #fffbf0; }
+.mat-row-duplicate { background: #f0f6fc; }
+.mat-row-error     { background: #fff0f0; }
+
+/* ステータスバッジ */
+.mat-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 700;
+}
+.mat-badge-ok    { background: #d7f7e3; color: #00622a; }
+.mat-badge-warn  { background: #fef9e7; color: #7a4e0d; border: 1px solid #f0c14b; }
+.mat-badge-dup   { background: #ddeeff; color: #0a3d6b; }
+.mat-badge-error { background: #fce8e8; color: #8c1717; }
+
+/* インポートアクション */
+.mat-import-actions {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+.mat-import-btn {
+    font-size: 14px !important;
+    padding: 6px 20px !important;
+}
+.mat-import-note {
+    font-size: 12px;
+    color: #777;
+}
+
+/* プログレスバー */
+.mat-progress-bar-wrap {
+    background: #e5e5e5;
+    border-radius: 6px;
+    height: 28px;
+    overflow: hidden;
+    margin-bottom: 10px;
+}
+.mat-progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #2271b1, #1d99c7);
+    border-radius: 6px;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: width .3s ease;
+    min-width: 36px;
+}
+#mat-progress-label {
+    font-size: 13px;
+    color: #555;
+}
+
+/* 結果表示 */
+.mat-result-summary {
+    margin-bottom: 16px;
+}
+.mat-result-table {
+    border-collapse: collapse;
+    font-size: 14px;
+    margin-top: 10px;
+}
+.mat-result-table th {
+    padding: 6px 20px 6px 0;
+    color: #555;
+    font-weight: 600;
+    text-align: left;
+    width: 120px;
+}
+.mat-result-table td {
+    padding: 6px 0;
+    font-size: 16px;
+}
+.mat-result-errors {
+    background: #fff8f8;
+    border: 1px solid #f5c6cb;
+    border-radius: 4px;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+}
+.mat-result-errors ul {
+    margin: 8px 0 0;
+    padding-left: 20px;
+    font-size: 13px;
+    color: #d63638;
+}
