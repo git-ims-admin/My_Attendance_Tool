@@ -556,7 +556,7 @@ function mat_get_grouped_data( $emp_master_id, $month = null ) {
     $results = $wpdb->get_results( $wpdb->prepare(
         "SELECT * FROM " . MAT_LOG_TABLE
         . " WHERE registered_user_id = %d AND timestamp LIKE %s"
-        . " ORDER BY timestamp DESC",
+        . " ORDER BY timestamp ASC",
         $emp_master_id,
         $month . '%'
     ) );
