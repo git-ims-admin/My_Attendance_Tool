@@ -8,7 +8,7 @@ add_action( 'admin_menu', 'mat_register_settings_page', 20 );
 function mat_register_settings_page() {
     add_submenu_page(
         'my-attendance-settings',
-        '勤怠ツール設定',
+        '打刻ツール設定',
         '設定',
         'manage_options',
         'mat-settings',
@@ -58,7 +58,7 @@ function mat_settings_page_render() {
     );
     ?>
     <div class="wrap">
-        <h1>⚙️ 勤怠ツール設定</h1>
+        <h1>⚙️ 打刻ツール設定</h1>
 
         <?php if ( isset( $_GET['saved'] ) ) : ?>
             <div class="notice notice-success is-dismissible"><p>設定を保存しました。</p></div>

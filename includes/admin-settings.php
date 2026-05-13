@@ -32,10 +32,10 @@ add_action( 'admin_enqueue_scripts', 'mat_admin_enqueue' );
 function mat_admin_enqueue( $hook ) {
     $mat_pages = array(
         'toplevel_page_my-attendance-settings',
-        '勤怠管理_page_my-attendance-settings',
-        '勤怠管理_page_mat-auth-management',
-        '勤怠管理_page_mat-settings',
-        '勤怠管理_page_mat-test-data',
+        '打刻管理_page_my-attendance-settings',
+        '打刻管理_page_mat-auth-management',
+        '打刻管理_page_mat-settings',
+        '打刻管理_page_mat-test-data',
     );
     if ( ! in_array( $hook, $mat_pages, true ) ) return;
 
@@ -50,7 +50,7 @@ function mat_admin_enqueue( $hook ) {
 }
 
 /**
- * 管理画面：勤怠編集 Ajax（管理者用）
+ * 管理画面：打刻編集 Ajax（管理者用）
  */
 add_action( 'wp_ajax_mat_admin_edit_log', 'mat_admin_edit_log_handler' );
 function mat_admin_edit_log_handler() {
@@ -114,7 +114,7 @@ function mat_admin_edit_log_handler() {
 }
 
 /**
- * 勤怠履歴ページのレンダリング
+ * 打刻履歴ページのレンダリング
  */
 function mat_history_page_render() {
     if ( ! current_user_can( 'manage_options' ) ) return;
@@ -169,7 +169,7 @@ function mat_history_page_render() {
     }
     ?>
     <div class="wrap">
-        <h1>📋 従業員勤怠履歴</h1>
+        <h1>📋 従業員打刻履歴</h1>
 
         <!-- ========== 職種フィルターチップ + 絞り込みフォーム ========== -->
         <div class="card" style="max-width:100%; margin-top:20px; padding:15px;">
