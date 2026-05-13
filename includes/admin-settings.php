@@ -119,8 +119,25 @@ function mat_admin_edit_log_handler() {
 function mat_history_page_render() {
     if ( ! current_user_can( 'manage_options' ) ) return;
 
-    // employee-manager から在籍社員一覧を取得
+    // employee-manager から在籍社員一覧・職種マスタを取得
     $employees = emp_get_active_employees();
+    $job_types = emp_get_job_types(); // wp_mst_job_type から動的取得
+
+    // ---- JS用: 全従業員データを配列化 ----
+    $emp_js_data = array();
+    foreach ( $employees as $emp ) {
+        $emp_js_data[] = array(
+            'code'     => $emp->employee_code,
+            'name'     => $emp->name,
+            'job_type' => isset( $emp->job_type_name ) ? $emp->job_type_name : '',
+        );
+    }
+
+    // ---- JS用: 職種名一覧 ----
+    $job_type_names = array();
+    foreach ( $job_types as $jt ) {
+        $job_type_names[] = $jt->name;
+    }
 
     // 選択中の社員を決定
     $selected_code = isset( $_GET['employee_code'] )
@@ -154,14 +171,56 @@ function mat_history_page_render() {
     <div class="wrap">
         <h1>📋 従業員勤怠履歴</h1>
 
-        <!-- 絞り込みフォーム -->
+        <!-- ========== 職種フィルターチップ + 絞り込みフォーム ========== -->
         <div class="card" style="max-width:100%; margin-top:20px; padding:15px;">
+
+            <?php if ( ! empty( $job_types ) ) : ?>
+            <!-- 職種フィルターチップ -->
+            <div style="margin-bottom:12px;">
+                <span style="font-size:0.85em; font-weight:600; color:#555; margin-right:8px; vertical-align:middle;">
+                    職種フィルター：
+                </span>
+                <div id="mat-job-type-chips" style="display:inline-flex; flex-wrap:wrap; gap:6px; vertical-align:middle;">
+                    <?php foreach ( $job_types as $jt ) : ?>
+                        <button type="button"
+                            class="mat-chip"
+                            data-job-type="<?php echo esc_attr( $jt->name ); ?>"
+                            style="
+                                display:inline-flex; align-items:center; gap:4px;
+                                padding:4px 12px; border-radius:20px; border:1.5px solid #2271b1;
+                                background:#2271b1; color:#fff;
+                                font-size:0.82em; font-weight:600; cursor:pointer;
+                                transition:background .15s, color .15s;
+                                line-height:1.5;
+                            ">
+                            <span class="mat-chip-dot" style="
+                                display:inline-block; width:7px; height:7px;
+                                border-radius:50%; background:#fff;
+                                transition:background .15s;
+                            "></span>
+                            <?php echo esc_html( $jt->name ); ?>
+                        </button>
+                    <?php endforeach; ?>
+                </div>
+                <button type="button" id="mat-chip-all-on"
+                    style="margin-left:10px; font-size:0.78em; color:#2271b1; background:none; border:none; cursor:pointer; text-decoration:underline; vertical-align:middle;">
+                    全ON
+                </button>
+                <button type="button" id="mat-chip-all-off"
+                    style="margin-left:4px; font-size:0.78em; color:#888; background:none; border:none; cursor:pointer; text-decoration:underline; vertical-align:middle;">
+                    全OFF
+                </button>
+            </div>
+            <?php endif; ?>
+
+            <!-- 絞り込みフォーム -->
             <form method="get" style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
                 <input type="hidden" name="page" value="my-attendance-settings">
                 <label>従業員：
-                    <select name="employee_code">
+                    <select name="employee_code" id="mat-employee-select">
                         <?php foreach ( $employees as $emp ) : ?>
                             <option value="<?php echo esc_attr( $emp->employee_code ); ?>"
+                                data-job-type="<?php echo esc_attr( isset( $emp->job_type_name ) ? $emp->job_type_name : '' ); ?>"
                                 <?php selected( $selected_code, $emp->employee_code ); ?>>
                                 [<?php echo esc_html( $emp->employee_code ); ?>] <?php echo esc_html( $emp->name ); ?>
                             </option>
@@ -218,9 +277,9 @@ function mat_history_page_render() {
                                         data-in="<?php echo esc_attr( $day['in'] === '-' ? '' : $day['in'] ); ?>"
                                         data-out="<?php echo esc_attr( $day['out'] === '-' ? '' : $day['out'] ); ?>"
                                         data-break="<?php echo esc_attr( $day['break'] === '-' ? '00:00' : $day['break'] ); ?>"
-                                        data-paid="<?php echo esc_attr( $day['paid_leave'] === '-' ? '' : $day['paid_leave'] ); ?>"
+                                        data-paid="<?php echo esc_attr( isset( $day['paid_leave'] ) ? $day['paid_leave'] : '' ); ?>"
                                         data-notes="<?php echo esc_attr( is_array( $day['notes'] ) ? implode( ' / ', $day['notes'] ) : '' ); ?>">
-                                        編集
+                                        ✏️ 編集
                                     </button>
                                 </td>
                             </tr>
@@ -229,20 +288,57 @@ function mat_history_page_render() {
                 </tbody>
             </table>
         <?php endif; ?>
-    </div>
 
-    <!-- 編集モーダル -->
-    <div id="mat-edit-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:9999; align-items:center; justify-content:center;">
-        <div style="background:#fff; border-radius:8px; padding:28px; width:440px; max-width:90%;">
-            <h3 style="margin:0 0 20px;">打刻データの編集</h3>
+    </div><!-- /.wrap -->
+
+    <!-- ========== 編集モーダル ========== -->
+    <div id="mat-edit-modal" style="
+        display:none; position:fixed; top:0; left:0; right:0; bottom:0;
+        background:rgba(0,0,0,.5); z-index:99999;
+        justify-content:center; align-items:center;">
+        <div style="
+            background:#fff; border-radius:8px; padding:24px;
+            width:420px; max-width:90%; box-shadow:0 4px 20px rgba(0,0,0,.3);">
+            <h3 style="margin:0 0 16px;">✏️ 打刻データの編集</h3>
             <table class="form-table" style="margin:0;">
-                <tr><th>出勤</th><td><input type="time" id="edit-in" class="regular-text"></td></tr>
-                <tr><th>退勤</th><td><input type="time" id="edit-out" class="regular-text"></td></tr>
-                <tr><th>休憩</th><td><input type="time" id="edit-break" class="regular-text" value="00:00"></td></tr>
-                <tr><th>有給希望日</th><td><input type="date" id="edit-paid" class="regular-text"></td></tr>
-                <tr><th>備考</th><td><textarea id="edit-notes" class="regular-text" rows="2"></textarea></td></tr>
+                <tr>
+                    <td style="padding:9px 4px; width:120px; font-weight:bold;">出勤時刻</td>
+                    <td style="padding:9px 4px;">
+                        <input type="time" id="edit-in" style="width:100%; padding:6px; border:1px solid #ccc; border-radius:4px;">
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding:9px 4px; font-weight:bold;">退勤時刻</td>
+                    <td style="padding:9px 4px;">
+                        <input type="time" id="edit-out" style="width:100%; padding:6px; border:1px solid #ccc; border-radius:4px;">
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding:9px 4px; font-weight:bold;">休憩時間</td>
+                    <td style="padding:9px 4px;">
+                        <input type="time" id="edit-break" value="00:00"
+                            style="width:100%; padding:6px; border:1px solid #ccc; border-radius:4px;">
+                        <small style="color:#999;">例: 1時間なら 01:00</small>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding:9px 4px; font-weight:bold; color:#d63638;">有給希望日</td>
+                    <td style="padding:9px 4px;">
+                        <input type="date" id="edit-paid" style="width:100%; padding:6px; border:1px solid #ccc; border-radius:4px;">
+                        <small style="color:#999;">クリアする場合は日付を消してください</small>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding:9px 4px; font-weight:bold; vertical-align:top; padding-top:13px;">備考</td>
+                    <td style="padding:9px 4px;">
+                        <textarea id="edit-notes" rows="3"
+                            style="width:100%; padding:6px; border:1px solid #ccc; border-radius:4px; box-sizing:border-box;"></textarea>
+                    </td>
+                </tr>
             </table>
-            <p id="edit-error" style="color:#d63638; margin:10px 0 0; display:none;"></p>
+
+            <p id="edit-error" style="color:#d63638; margin:10px 0 0; display:none; font-size:.9em;"></p>
+
             <div style="margin-top:20px; display:flex; gap:10px; justify-content:flex-end;">
                 <button type="button" id="edit-cancel" class="button">キャンセル</button>
                 <button type="button" id="edit-save" class="button button-primary">💾 保存する</button>
@@ -252,8 +348,170 @@ function mat_history_page_render() {
 
     <script>
     jQuery(document).ready(function($) {
+
+        // =========================================================
+        //  職種フィルターチップ
+        // =========================================================
+
+        var STORAGE_KEY   = 'mat_history_job_type_filter';
+        // デフォルトでOFFにする職種名リスト（職種マスタにあっても初回はOFF）
+        var DEFAULT_OFF   = ['長距離', '郵便'];
+
+        // PHPから渡された全従業員データ
+        var allEmployees  = <?php echo json_encode( $emp_js_data, JSON_UNESCAPED_UNICODE ); ?>;
+        // PHPから渡された全職種名
+        var allJobTypes   = <?php echo json_encode( $job_type_names, JSON_UNESCAPED_UNICODE ); ?>;
+        // 現在の選択社員コード
+        var selectedCode  = <?php echo json_encode( $selected_code ); ?>;
+
+        /**
+         * localStorageからチップ状態を読み込む
+         * - 保存済みのキーはそのまま使用
+         * - 新しい職種（保存されていないキー）は DEFAULT_OFF に含まれなければ ON
+         */
+        function loadChipState() {
+            var stored = {};
+            try {
+                stored = JSON.parse( localStorage.getItem( STORAGE_KEY ) || '{}' );
+            } catch(e) {}
+
+            var state = {};
+            allJobTypes.forEach( function(name) {
+                if ( typeof stored[name] !== 'undefined' ) {
+                    // 保存済みの状態を引き継ぐ
+                    state[name] = stored[name];
+                } else {
+                    // 新規職種: DEFAULT_OFF に含まれていなければ ON
+                    state[name] = ( DEFAULT_OFF.indexOf(name) === -1 );
+                }
+            });
+            return state;
+        }
+
+        /**
+         * チップ状態を保存する
+         */
+        function saveChipState( state ) {
+            try {
+                localStorage.setItem( STORAGE_KEY, JSON.stringify(state) );
+            } catch(e) {}
+        }
+
+        /**
+         * チップのビジュアルを状態に合わせて更新する
+         */
+        function renderChips( state ) {
+            $('#mat-job-type-chips .mat-chip').each( function() {
+                var name = $(this).data('job-type');
+                var on   = !! state[name];
+                if (on) {
+                    $(this).css({
+                        'background' : '#2271b1',
+                        'color'      : '#fff',
+                        'border-color': '#2271b1',
+                        'opacity'    : '1',
+                    });
+                    $(this).find('.mat-chip-dot').css('background', '#fff');
+                } else {
+                    $(this).css({
+                        'background' : '#f0f0f1',
+                        'color'      : '#777',
+                        'border-color': '#ccc',
+                        'opacity'    : '1',
+                    });
+                    $(this).find('.mat-chip-dot').css('background', '#bbb');
+                }
+            });
+        }
+
+        /**
+         * チップ状態に基づいて従業員セレクトを再構築する
+         */
+        function rebuildSelect( state ) {
+            var $select       = $('#mat-employee-select');
+            var currentVal    = $select.val() || selectedCode;
+            var activeTypes   = [];
+
+            // ONになっている職種を収集
+            allJobTypes.forEach( function(name) {
+                if ( state[name] ) activeTypes.push(name);
+            });
+
+            // フィルター済み従業員リストを作成
+            // 「職種なし（空文字）」の従業員は常に表示
+            var filtered = allEmployees.filter( function(emp) {
+                if ( emp.job_type === '' || emp.job_type === null ) return true;
+                return activeTypes.indexOf( emp.job_type ) !== -1;
+            });
+
+            // セレクトを再構築
+            $select.empty();
+            var foundCurrent = false;
+            filtered.forEach( function(emp) {
+                var opt = $('<option>', {
+                    value: emp.code,
+                    text : '[' + emp.code + '] ' + emp.name,
+                });
+                if ( emp.code === currentVal ) {
+                    opt.prop('selected', true);
+                    foundCurrent = true;
+                }
+                $select.append(opt);
+            });
+
+            // 現在選択中の社員が非表示になった場合は先頭を選択
+            if ( ! foundCurrent && filtered.length > 0 ) {
+                $select.find('option:first').prop('selected', true);
+            }
+
+            // 絞り込まれた件数を表示
+            var total = allEmployees.length;
+            var shown = filtered.length;
+            var $label = $('#mat-chip-filter-count');
+            if ( $label.length === 0 ) {
+                $label = $('<span id="mat-chip-filter-count" style="font-size:0.8em; color:#666; margin-left:8px;"></span>');
+                $select.after($label);
+            }
+            $label.text( '（' + shown + ' / ' + total + ' 名）' );
+        }
+
+        // ---- 初期化 ----
+        if ( allJobTypes.length > 0 ) {
+            var chipState = loadChipState();
+            renderChips( chipState );
+            rebuildSelect( chipState );
+
+            // チップのクリック
+            $('#mat-job-type-chips').on( 'click', '.mat-chip', function() {
+                var name = $(this).data('job-type');
+                chipState[name] = ! chipState[name];
+                saveChipState( chipState );
+                renderChips( chipState );
+                rebuildSelect( chipState );
+            });
+
+            // 全ON ボタン
+            $('#mat-chip-all-on').on( 'click', function() {
+                allJobTypes.forEach( function(name) { chipState[name] = true; });
+                saveChipState( chipState );
+                renderChips( chipState );
+                rebuildSelect( chipState );
+            });
+
+            // 全OFF ボタン
+            $('#mat-chip-all-off').on( 'click', function() {
+                allJobTypes.forEach( function(name) { chipState[name] = false; });
+                saveChipState( chipState );
+                renderChips( chipState );
+                rebuildSelect( chipState );
+            });
+        }
+
+        // =========================================================
+        //  打刻編集モーダル
+        // =========================================================
         var currentId = null;
-        var nonce = '<?php echo wp_create_nonce("mat_admin_nonce"); ?>';
+        var nonce     = '<?php echo wp_create_nonce("mat_admin_nonce"); ?>';
         var viewMonth = '<?php echo esc_js( $view_month ); ?>';
 
         function paidDisplayToInput(mmdd) {
@@ -281,7 +539,9 @@ function mat_history_page_render() {
             if (e.target === this) { $('#mat-edit-modal').hide(); currentId = null; }
         });
 
-        $(document).on('keydown', function(e) { if (e.key === 'Escape') { $('#mat-edit-modal').hide(); } });
+        $(document).on('keydown', function(e) {
+            if (e.key === 'Escape') { $('#mat-edit-modal').hide(); }
+        });
 
         $('#edit-save').on('click', function() {
             if (!currentId) return;
@@ -314,7 +574,8 @@ function mat_history_page_render() {
                 }
             });
         });
-    });
+
+    }); // jQuery ready
     </script>
     <?php
 }
