@@ -353,48 +353,48 @@ jQuery(document).ready(function ($) {
     });
 
     // =========================================================
-    //  打刻ボタンの活性状態を更新
+    //  打刻ボタンの活性状態を更新（本日分はサーバーで判定）
     // =========================================================
-    function updatePunchButtons(logs) {
-        // サイト日付（WordPress）と各行の日付で判定。ブラウザのローカル日付だけだと TZ ずれで退勤が無効のままになる。
-        var todayYmd = matAjax.todayYmd || '';
-        var now = new Date();
-        var legacyToday = String(now.getMonth() + 1).padStart(2, '0') + '/' + String(now.getDate()).padStart(2, '0');
+    function applyPunchButtons(status) {
+        if (!status) return;
 
-        var hasClockin = false;
-        var hasClockout = false;
-
-        $.each(logs, function (_, row) {
-            var isToday = false;
-            if (todayYmd && row.date_ymd) {
-                isToday = row.date_ymd === todayYmd;
-            } else if (row.date) {
-                isToday = row.date.indexOf(legacyToday) === 0;
-            }
-            if (!isToday) return;
-
-            if (row.in && row.in !== '-' && row.in !== '休日') hasClockin = true;
-            if (row.out && row.out !== '-') hasClockout = true;
-        });
+        var hasClockin = !!status.has_clockin;
+        var hasClockout = !!status.has_clockout;
+        var isHoliday = !!status.is_holiday;
 
         var $btnIn = $('.mat-wrap [data-label="出勤"]');
         var $btnOut = $('.mat-wrap [data-label="退勤"]');
 
-        // 出勤ボタン制御
-        if (hasClockin) {
-            $btnIn.prop('disabled', true).text('出勤済み').css('opacity', '0.5');
+        if (isHoliday || hasClockin) {
+            var inLabel = isHoliday ? '休日登録済' : '出勤済み';
+            $btnIn.prop('disabled', true).text(inLabel).css('opacity', '0.5');
         } else {
             $btnIn.prop('disabled', false).text('出勤').css('opacity', '1');
         }
 
-        // 退勤ボタン制御
-        if (!hasClockin || hasClockout) {
-            $btnOut.prop('disabled', true)
-                .text(hasClockout ? '退勤済み' : '退勤')
-                .css('opacity', '0.5');
+        if (isHoliday || !hasClockin || hasClockout) {
+            var outLabel = hasClockout ? '退勤済み' : '退勤';
+            $btnOut.prop('disabled', true).text(outLabel).css('opacity', '0.5');
         } else {
             $btnOut.prop('disabled', false).text('退勤').css('opacity', '1');
         }
+    }
+
+    function refreshPunchButtons() {
+        if (!session.empMasterId) return;
+
+        $.post(ajaxurl, {
+            action: 'mat_get_today_status',
+            emp_master_id: session.empMasterId,
+            nonce: nonce,
+        }, function (res) {
+            if (res.success) {
+                if (res.data.today_ymd) {
+                    matAjax.todayYmd = res.data.today_ymd;
+                }
+                applyPunchButtons(res.data);
+            }
+        });
     }
 
     // =========================================================
@@ -434,6 +434,8 @@ jQuery(document).ready(function ($) {
                 var viewingMonth = $('#mat-view-month').val() || getCurrentYearMonth();
                 if (registeredMonth === viewingMonth) {
                     renderLogs(res.data);
+                } else {
+                    refreshPunchButtons();
                 }
                 // 3秒後に成功メッセージを消す
                 setTimeout(function () { clearSuccess('mat-success-holiday'); }, 3000);
@@ -574,15 +576,17 @@ jQuery(document).ready(function ($) {
             $('#mat-history-body').html(
                 '<tr><td colspan="7" class="mat-loading">データがありません。</td></tr>'
             );
-            updatePunchButtons([]);
+            refreshPunchButtons();
             return;
         }
 
         var html = '';
 
         $.each(data.logs, function (_, row) {
-            // 休日行はグレー背景で表示
-            var rowStyle = row.is_holiday ? ' style="background:#f5f5f5;color:#999;"' : '';
+            // 休日行・時刻なしの空行はグレー背景で表示
+            var rowStyle = (row.is_holiday || row.is_empty)
+                ? ' style="background:#f5f5f5;color:#999;"'
+                : '';
             html += '<tr data-id="' + row.id + '"' + rowStyle + '>';
             html += '<td>' + esc(row.date) + '</td>';
 
@@ -628,7 +632,7 @@ jQuery(document).ready(function ($) {
         });
 
         $('#mat-history-body').html(html);
-        updatePunchButtons(data.logs);
+        refreshPunchButtons();
     }
 
     // 月変更で自動リロード
