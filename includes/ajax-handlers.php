@@ -172,6 +172,8 @@ function mat_attendance_update_handler() {
             array( '%d' )
         );
         if ( $ok === false ) {
+            error_log( '[MAT] 休憩/退勤 update失敗 id=' . $existing_id . ' error=' . $wpdb->last_error );
+            error_log( '[MAT] new_item=' . $new_item );
             wp_send_json_error( '打刻の保存に失敗しました。管理者にお問い合わせください。' );
         }
     }
