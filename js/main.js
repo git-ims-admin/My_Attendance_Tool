@@ -376,7 +376,7 @@ jQuery(document).ready(function ($) {
         var hasClockin = !!status.has_clockin;
         var hasClockout = !!status.has_clockout;
         var isHoliday = !!status.is_holiday;
-        session.hasBreak = !!status.has_break;
+        session.hasBreak = !!status.has_break_time;
         var $btnIn = $('.mat-wrap [data-label="出勤"]');
         var $btnOut = $('.mat-wrap [data-label="退勤"]');
 
