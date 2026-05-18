@@ -115,34 +115,54 @@ function mat_attendance_update_handler() {
         wp_send_json_error( '社員情報が一致しません。ログアウトしてから再度お試しください。' );
     }
 
-    // ★ 重複チェック：その日のレコード(枠)が既にあるか検索
-    $existing_id = $wpdb->get_var( $wpdb->prepare(
-        "SELECT id FROM " . MAT_LOG_TABLE . " WHERE registered_user_id = %d AND DATE(timestamp) = %s LIMIT 1",
-        $emp_master_id, $today
-    ) );
+    $existing_row = mat_get_day_log_row( $emp_master_id, $today );
+    $existing_id  = $existing_row ? (int) $existing_row->id : 0;
+    $parsed       = mat_parse_attendance_item_name( $existing_row ? $existing_row->item_name : '' );
 
     if ( $label === '出勤' ) {
-        if ( $existing_id ) wp_send_json_error( '本日はすでに打刻データまたは休日の記録があります。やり直す場合は「削除」してください。' );
-        
-        $ok = $wpdb->insert( MAT_LOG_TABLE, array(
-            'registered_user_id'   => $emp_master_id,
-            'registered_user_name' => $emp->name,
-            'employee_code'        => $employee_code,
-            'item_name'            => "出勤: " . current_time('H:i'),
-            'timestamp'            => current_time('Y-m-d H:i:s'),
-        ), array( '%d', '%s', '%s', '%s', '%s' ) );
-        if ( ! $ok ) {
+        if ( $parsed['is_holiday'] ) {
+            wp_send_json_error( '本日は休日として登録されています。出勤する場合は、履歴の「編集」から削除するか、休日登録をやり直してください。' );
+        }
+        if ( $parsed['has_clockin'] ) {
+            wp_send_json_error( '本日はすでに出勤打刻済みです。' );
+        }
+
+        $clock_in_str = '出勤: ' . current_time( 'H:i' );
+        if ( $existing_id ) {
+            $base     = trim( (string) $existing_row->item_name );
+            $new_item = $base === '' ? $clock_in_str : $base . ' | ' . $clock_in_str;
+            $ok       = $wpdb->update(
+                MAT_LOG_TABLE,
+                array( 'item_name' => $new_item ),
+                array( 'id' => $existing_id ),
+                array( '%s' ),
+                array( '%d' )
+            );
+        } else {
+            $ok = $wpdb->insert( MAT_LOG_TABLE, array(
+                'registered_user_id'   => $emp_master_id,
+                'registered_user_name' => $emp->name,
+                'employee_code'        => $employee_code,
+                'item_name'            => $clock_in_str,
+                'timestamp'            => current_time( 'Y-m-d H:i:s' ),
+            ), array( '%d', '%s', '%s', '%s', '%s' ) );
+        }
+        if ( $existing_id && $ok === false ) {
+            wp_send_json_error( '打刻の保存に失敗しました。管理者にお問い合わせください。' );
+        }
+        if ( ! $existing_id && ! $ok ) {
             wp_send_json_error( '打刻の保存に失敗しました。管理者にお問い合わせください。' );
         }
     } else {
-        if ( ! $existing_id ) wp_send_json_error( '本日のデータが見つかりません。先に出勤を打刻してください。' );
-        
-        $log = $wpdb->get_row( $wpdb->prepare( "SELECT item_name FROM " . MAT_LOG_TABLE . " WHERE id = %d", $existing_id ) );
-        $time_val = ( $label === '休憩' ) ? sanitize_text_field( $_POST['break_hhmm'] ?? '00:00' ) : current_time('H:i');
-        
-        // 既存の内容に追記
-        $new_item = $log->item_name . ' | ' . $label . ": " . $time_val;
-        if ( ! empty( $note ) ) $new_item .= " | 備考: " . $note;
+        if ( ! $existing_id || ! $parsed['has_clockin'] ) {
+            wp_send_json_error( '本日のデータが見つかりません。先に出勤を打刻してください。' );
+        }
+
+        $time_val = ( $label === '休憩' ) ? sanitize_text_field( $_POST['break_hhmm'] ?? '00:00' ) : current_time( 'H:i' );
+        $new_item = $existing_row->item_name . ' | ' . $label . ': ' . $time_val;
+        if ( ! empty( $note ) ) {
+            $new_item .= ' | 備考: ' . $note;
+        }
 
         $ok = $wpdb->update(
             MAT_LOG_TABLE,
@@ -229,6 +249,20 @@ function mat_get_logs_handler() {
     wp_send_json_success( mat_get_grouped_data( $emp_id, $month ) );
 }
 
+// 本日の打刻状態（ボタン制御用・表示月に依存しない）
+add_action( 'wp_ajax_mat_get_today_status', 'mat_get_today_status_handler' );
+add_action( 'wp_ajax_nopriv_mat_get_today_status', 'mat_get_today_status_handler' );
+function mat_get_today_status_handler() {
+    check_ajax_referer( 'mat_nonce', 'nonce' );
+    $emp_id = intval( $_POST['emp_master_id'] ?? 0 );
+    if ( ! $emp_id ) {
+        wp_send_json_error( '社員情報が不正です。' );
+    }
+    $status = mat_get_today_punch_status( $emp_id );
+    $status['today_ymd'] = current_time( 'Y-m-d' );
+    wp_send_json_success( $status );
+}
+
 // ユーザーによる編集
 add_action( 'wp_ajax_mat_edit_log', 'mat_edit_log_handler' );
 add_action( 'wp_ajax_nopriv_mat_edit_log', 'mat_edit_log_handler' );
@@ -305,6 +339,86 @@ function mat_get_paid_leave_list( $employee_code ) {
     return array( 'requests' => $list );
 }
 
+/**
+ * item_name から打刻内容を解析（時刻が入っているかで判定）
+ */
+function mat_parse_attendance_item_name( $item_name ) {
+    $item = trim( (string) $item_name );
+
+    $is_holiday   = ( $item === '休日' );
+    $has_clockin  = (bool) preg_match( '/出勤:\s*(\d{2}:\d{2})/', $item );
+    $has_clockout = (bool) preg_match( '/退勤:\s*(\d{2}:\d{2})/', $item );
+    $has_break    = (bool) preg_match( '/休憩:\s*(\d{2}:\d{2})/', $item, $br_m );
+    $has_break_time = $has_break && isset( $br_m[1] ) && $br_m[1] !== '00:00';
+
+    preg_match_all( '/備考:\s*([^|]+)/', $item, $notes_m );
+    $has_notes = false;
+    foreach ( $notes_m[1] ?? array() as $note ) {
+        if ( trim( $note ) !== '' ) {
+            $has_notes = true;
+            break;
+        }
+    }
+
+    $has_meaningful_data = $is_holiday || $has_clockin || $has_clockout || $has_break_time || $has_notes;
+
+    return array(
+        'is_holiday'          => $is_holiday,
+        'has_clockin'         => $has_clockin,
+        'has_clockout'        => $has_clockout,
+        'has_break_time'      => $has_break_time,
+        'has_notes'           => $has_notes,
+        'has_meaningful_data' => $has_meaningful_data,
+    );
+}
+
+/** 指定日の代表レコード（時刻入りを優先） */
+function mat_get_day_log_row( $emp_master_id, $date ) {
+    global $wpdb;
+    $rows = $wpdb->get_results( $wpdb->prepare(
+        "SELECT id, item_name, timestamp FROM " . MAT_LOG_TABLE . " WHERE registered_user_id = %d AND DATE(timestamp) = %s ORDER BY id ASC",
+        $emp_master_id, $date
+    ) );
+    if ( empty( $rows ) ) {
+        return null;
+    }
+
+    $best      = $rows[0];
+    $best_rank = -1;
+    foreach ( $rows as $row ) {
+        $p = mat_parse_attendance_item_name( $row->item_name );
+        if ( $p['is_holiday'] ) {
+            $rank = 100;
+        } elseif ( $p['has_clockin'] ) {
+            $rank = 90;
+        } elseif ( $p['has_clockout'] ) {
+            $rank = 80;
+        } elseif ( $p['has_meaningful_data'] ) {
+            $rank = 50;
+        } else {
+            $rank = 0;
+        }
+        if ( $rank >= $best_rank ) {
+            $best_rank = $rank;
+            $best      = $row;
+        }
+    }
+    return $best;
+}
+
+// 本日の打刻状態
+function mat_get_today_punch_status( $emp_master_id ) {
+    $row = mat_get_day_log_row( $emp_master_id, current_time( 'Y-m-d' ) );
+    if ( ! $row ) {
+        return array(
+            'is_holiday'   => false,
+            'has_clockin'  => false,
+            'has_clockout' => false,
+        );
+    }
+    return mat_parse_attendance_item_name( $row->item_name );
+}
+
 // 履歴整形データ取得
 function mat_get_grouped_data( $emp_master_id, $month = null ) {
     global $wpdb;
@@ -318,17 +432,27 @@ function mat_get_grouped_data( $emp_master_id, $month = null ) {
         $dow = array('日','月','火','水','木','金','土');
         $date_label = date('m/d', $ts) . '(' . $dow[date('w', $ts)] . ')';
         
-        $is_holiday = ( trim($r->item_name) === '休日' );
+        $parsed     = mat_parse_attendance_item_name( $r->item_name );
+        $is_holiday = $parsed['is_holiday'];
         $in = $out = $br = '-';
-        
-        if ( $is_holiday ) { $in = '休日'; } else {
-            if ( preg_match( '/出勤:\s*(\d{2}:\d{2})/', $r->item_name, $m ) ) { $in = $m[1]; $work_days_count++; }
-            if ( preg_match( '/退勤:\s*(\d{2}:\d{2})/', $r->item_name, $m ) ) { $out = $m[1]; }
-            if ( preg_match( '/休憩:\s*(\d{2}:\d{2})/', $r->item_name, $m ) ) { $br = ($m[1] === '00:00') ? '-' : $m[1]; }
+
+        if ( $is_holiday ) {
+            $in = '休日';
+        } else {
+            if ( preg_match( '/出勤:\s*(\d{2}:\d{2})/', $r->item_name, $m ) ) {
+                $in = $m[1];
+                $work_days_count++;
+            }
+            if ( preg_match( '/退勤:\s*(\d{2}:\d{2})/', $r->item_name, $m ) ) {
+                $out = $m[1];
+            }
+            if ( preg_match( '/休憩:\s*(\d{2}:\d{2})/', $r->item_name, $m ) ) {
+                $br = ( $m[1] === '00:00' ) ? '-' : $m[1];
+            }
         }
-        
+
         preg_match_all( '/備考:\s*([^|]+)/', $r->item_name, $matches );
-        $can_edit = ! $is_holiday && mat_get_setting( 'allow_log_edit', false ) && mat_is_in_current_period( date('Y-m-d', $ts) );
+        $can_edit = ! $is_holiday && mat_get_setting( 'allow_log_edit', false ) && mat_is_in_current_period( date( 'Y-m-d', $ts ) );
         $date_ymd = substr( $r->timestamp, 0, 10 );
 
         $logs[] = array(
@@ -341,6 +465,7 @@ function mat_get_grouped_data( $emp_master_id, $month = null ) {
             'notes'      => $matches[1] ?? array(),
             'can_edit'   => $can_edit,
             'is_holiday' => $is_holiday,
+            'is_empty'   => ! $parsed['has_meaningful_data'],
         );
     }
     return array(
